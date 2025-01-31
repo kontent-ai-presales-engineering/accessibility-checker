@@ -1,17 +1,29 @@
-import { AccessibilityIssue, severityColors, severityIcons } from "@/lib/wcag";
-import { LucideIcon } from "lucide-react";
-import * as Icons from "lucide-react";
+import { AccessibilityIssue, severityColors } from "@/lib/wcag";
+import { AlertTriangle, AlertCircle, AlertOctagon, Info } from "lucide-react";
 
 interface IssueSeverityProps {
   impact: AccessibilityIssue['impact'];
 }
 
 export default function IssueSeverity({ impact }: IssueSeverityProps) {
-  const IconComponent = Icons[severityIcons[impact] as keyof typeof Icons] as LucideIcon;
-  
+  const getIcon = () => {
+    switch (impact) {
+      case 'critical':
+        return <AlertOctagon className="h-4 w-4" />;
+      case 'serious':
+        return <AlertTriangle className="h-4 w-4" />;
+      case 'moderate':
+        return <AlertCircle className="h-4 w-4" />;
+      case 'minor':
+        return <Info className="h-4 w-4" />;
+      default:
+        return <AlertCircle className="h-4 w-4" />;
+    }
+  };
+
   return (
     <div className={`inline-flex items-center gap-1 ${severityColors[impact]}`}>
-      <IconComponent className="h-4 w-4" />
+      {getIcon()}
       <span className="font-medium capitalize">{impact}</span>
     </div>
   );
