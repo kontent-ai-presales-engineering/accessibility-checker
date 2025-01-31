@@ -14,28 +14,34 @@ export function registerRoutes(app: Express): Server {
     try {
       const { url } = urlSchema.parse(req.body);
 
-      // Launch browser with minimal configuration and additional flags
-      const browser = await puppeteer.launch({ 
-        headless: true,
+      // Launch browser with CDP and minimal configuration
+      const browser = await puppeteer.launch({
+        headless: "new",
+        product: 'chrome',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
           '--no-zygote',
-          '--single-process',
+          '--headless=new',
           '--disable-extensions',
-          '--disable-features=site-per-process',
-          '--disable-software-rasterizer'
-        ]
+          '--remote-debugging-port=0',
+          '--use-gl=swiftshader',
+          '--window-size=1280,800'
+        ],
+        ignoreDefaultArgs: ['--enable-automation'],
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
       });
 
       try {
         const page = await browser.newPage();
-        // Set a reasonable viewport
+
+        // Minimal page configuration
+        await page.setJavaScriptEnabled(true);
         await page.setViewport({ width: 1280, height: 800 });
 
-        // Navigate with a longer timeout and wait for network idle
+        // Navigate with timeout
         await page.goto(url, { 
           waitUntil: 'networkidle0',
           timeout: 30000

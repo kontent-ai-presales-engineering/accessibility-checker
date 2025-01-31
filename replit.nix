@@ -1,5 +1,7 @@
 {pkgs}: {
   deps = [
+    pkgs.chromium
+    pkgs.xvfb-run
     pkgs.cups
     pkgs.atk
     pkgs.dbus
