@@ -14,10 +14,16 @@ export function registerRoutes(app: Express): Server {
     try {
       const { url } = urlSchema.parse(req.body);
 
-      // Launch headless browser
+      // Launch headless browser with minimal configuration
       const browser = await puppeteer.launch({ 
-        headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        headless: 'new',
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--no-zygote'
+        ]
       });
 
       try {
