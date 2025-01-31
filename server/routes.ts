@@ -14,40 +14,36 @@ export function registerRoutes(app: Express): Server {
     try {
       const { url } = urlSchema.parse(req.body);
 
-      // Launch browser with CDP and minimal configuration
+      console.log('Launching browser with system Chromium...');
       const browser = await puppeteer.launch({
-        headless: "new",
-        product: 'chrome',
+        headless: true,
+        executablePath: '/nix/store/chromium/bin/chromium',
         args: [
           '--no-sandbox',
           '--disable-setuid-sandbox',
           '--disable-dev-shm-usage',
           '--disable-gpu',
+          '--no-first-run',
           '--no-zygote',
-          '--headless=new',
-          '--disable-extensions',
-          '--remote-debugging-port=0',
-          '--use-gl=swiftshader',
-          '--window-size=1280,800'
-        ],
-        ignoreDefaultArgs: ['--enable-automation'],
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined
+          '--single-process',
+          '--disable-extensions'
+        ]
       });
 
       try {
+        console.log('Creating new page...');
         const page = await browser.newPage();
 
-        // Minimal page configuration
-        await page.setJavaScriptEnabled(true);
+        console.log('Setting viewport...');
         await page.setViewport({ width: 1280, height: 800 });
 
-        // Navigate with timeout
+        console.log(`Navigating to ${url}...`);
         await page.goto(url, { 
           waitUntil: 'networkidle0',
           timeout: 30000
         });
 
-        // Run accessibility tests
+        console.log('Running accessibility analysis...');
         const results = await new AxePuppeteer(page).analyze();
 
         // Transform results into our format
@@ -63,6 +59,9 @@ export function registerRoutes(app: Express): Server {
         }));
 
         res.json({ issues });
+      } catch (error) {
+        console.error('Error during page operations:', error);
+        throw error;
       } finally {
         await browser.close();
       }
