@@ -15,6 +15,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { AccessibilityIssue } from "@/lib/wcag";
 import { Loader2 } from "lucide-react";
+import CheckProgress from "./CheckProgress";
+import { useState, useEffect } from "react";
 
 const formSchema = z.object({
   url: z.string().url("Please enter a valid URL"),
@@ -26,6 +28,7 @@ interface UrlFormProps {
 
 export default function UrlForm({ onResults }: UrlFormProps) {
   const { toast } = useToast();
+  const [checkStep, setCheckStep] = useState(-1);
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -35,10 +38,12 @@ export default function UrlForm({ onResults }: UrlFormProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
+      setCheckStep(0); // Start checking
       const res = await apiRequest("POST", "/api/check", values);
       return res.json();
     },
     onSuccess: (data) => {
+      setCheckStep(-1); // Reset progress
       onResults(data.issues, form.getValues("url"));
       toast({
         title: "Analysis Complete",
@@ -46,6 +51,7 @@ export default function UrlForm({ onResults }: UrlFormProps) {
       });
     },
     onError: (error) => {
+      setCheckStep(-1); // Reset progress
       toast({
         title: "Error",
         description: error.message,
@@ -53,6 +59,16 @@ export default function UrlForm({ onResults }: UrlFormProps) {
       });
     },
   });
+
+  // Simulate progress steps
+  useEffect(() => {
+    if (checkStep >= 0 && checkStep < 2) {
+      const timer = setTimeout(() => {
+        setCheckStep(prev => prev + 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [checkStep]);
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     mutation.mutate(values);
@@ -92,6 +108,7 @@ export default function UrlForm({ onResults }: UrlFormProps) {
             </FormItem>
           )}
         />
+        {checkStep >= 0 && <CheckProgress currentStep={checkStep} />}
       </form>
     </Form>
   );

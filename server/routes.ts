@@ -46,17 +46,32 @@ export function registerRoutes(app: Express): Server {
         console.log('Running accessibility analysis...');
         const results = await new AxePuppeteer(page).analyze();
 
-        // Transform results into our format
-        const issues = results.violations.map((violation: any) => ({
-          code: violation.id,
-          type: 'error',
-          message: violation.help,
-          context: violation.nodes[0]?.html || '',
-          selector: violation.nodes[0]?.target[0] || '',
-          wcagCriteria: violation.tags.filter((t: string) => t.startsWith('wcag')).join(', '),
-          impact: violation.impact as 'critical' | 'serious' | 'moderate' | 'minor',
-          suggestion: violation.nodes[0]?.failureSummary || violation.description
-        }));
+        // Transform results into our format with more WCAG details
+        const issues = results.violations.map((violation: any) => {
+          // Get detailed WCAG criteria info
+          const wcagTags = violation.tags
+            .filter((t: string) => t.startsWith('wcag'))
+            .map((tag: string) => {
+              const [_, level, criterion] = tag.split('.');
+              return `WCAG ${level.toUpperCase()} ${criterion}`;
+            })
+            .join(', ');
+
+          return {
+            code: violation.id,
+            type: 'error',
+            message: violation.help,
+            context: violation.nodes[0]?.html || '',
+            selector: violation.nodes[0]?.target[0] || '',
+            wcagCriteria: wcagTags,
+            impact: violation.impact as 'critical' | 'serious' | 'moderate' | 'minor',
+            suggestion: violation.nodes[0]?.failureSummary || violation.description,
+            helpUrl: violation.helpUrl,
+            category: violation.tags
+              .filter((t: string) => !t.startsWith('wcag'))
+              .join(', ')
+          };
+        });
 
         res.json({ issues });
       } catch (error) {
