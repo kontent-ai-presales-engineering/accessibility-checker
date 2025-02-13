@@ -1,11 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AccessibilityIssue, severityColors } from "@/lib/wcag";
+import { AccessibilityIssue, severityColors, exportToCSV, exportToJSON } from "@/lib/wcag";
 import IssueSeverity from "./IssueSeverity";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface AccessibilityResultsProps {
   issues: AccessibilityIssue[];
@@ -15,7 +21,7 @@ interface AccessibilityResultsProps {
 export default function AccessibilityResults({ issues, url }: AccessibilityResultsProps) {
   const { toast } = useToast();
   const severities = ['critical', 'serious', 'moderate', 'minor'] as const;
-  
+
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({
@@ -29,6 +35,22 @@ export default function AccessibilityResults({ issues, url }: AccessibilityResul
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Results for: {url}</span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <Download className="mr-2 h-4 w-4" />
+                Export Report
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem onClick={() => exportToCSV(issues, url)}>
+                Export as CSV
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => exportToJSON(issues, url)}>
+                Export as JSON
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </CardTitle>
       </CardHeader>
       <CardContent>
