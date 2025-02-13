@@ -4,10 +4,8 @@ import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 interface CheckProgressProps {
   currentStep: number;
   currentUrl?: string;
-  progress?: {
-    current: number;
-    total: number;
-  };
+  totalProcessed: number;
+  currentBatch: number;
 }
 
 const steps = [
@@ -16,7 +14,12 @@ const steps = [
   "Running accessibility analysis"
 ];
 
-export default function CheckProgress({ currentStep, currentUrl, progress }: CheckProgressProps) {
+export default function CheckProgress({ 
+  currentStep, 
+  currentUrl, 
+  totalProcessed,
+  currentBatch 
+}: CheckProgressProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -42,10 +45,10 @@ export default function CheckProgress({ currentStep, currentUrl, progress }: Che
             {step}
             {index === currentStep && currentUrl && (
               <span className="ml-2 text-sm text-muted-foreground">
-                Processing: {currentUrl}
-                {progress && (
+                {currentUrl}
+                {totalProcessed > 0 && (
                   <span className="ml-2">
-                    ({progress.current}/{progress.total})
+                    (Batch {currentBatch + 1}, Total URLs processed: {totalProcessed})
                   </span>
                 )}
               </span>

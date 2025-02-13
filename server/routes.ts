@@ -6,7 +6,7 @@ import puppeteer from 'puppeteer';
 import { z } from "zod";
 import { db } from "@db";
 import { urls } from "@db/schema";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { getDomain, isInternalLink, normalizeUrl } from "./utils";
 import WebSocket from 'ws';
 import { WebSocketServer } from 'ws';
@@ -19,7 +19,6 @@ async function analyzeUrl(url: string) {
   console.log(`Analyzing URL: ${url}`);
   const domain = getDomain(url);
 
-  // Launch a new browser instance for each URL
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
@@ -44,7 +43,6 @@ async function analyzeUrl(url: string) {
       timeout: 15000 
     });
 
-    // Extract links
     const content = await page.content();
     const $ = cheerio.load(content);
     const links = new Set<string>();
@@ -59,7 +57,6 @@ async function analyzeUrl(url: string) {
       }
     });
 
-    // Store new internal links
     const linkArray = Array.from(links);
     for (const link of linkArray) {
       await db.insert(urls).values({
@@ -70,11 +67,9 @@ async function analyzeUrl(url: string) {
       }).onConflictDoNothing();
     }
 
-    // Run accessibility analysis
     console.log('Running accessibility analysis...');
     const results = await new AxePuppeteer(page).analyze();
 
-    // Transform results and include source URL
     const issues = results.violations.map((violation: any) => {
       const wcagTags = violation.tags
         .filter((t: string) => t.startsWith('wcag'))
@@ -112,7 +107,6 @@ async function analyzeUrl(url: string) {
       };
     });
 
-    // Mark current URL as processed
     await db.update(urls)
       .set({ processed: true })
       .where(eq(urls.url, url));
@@ -120,7 +114,6 @@ async function analyzeUrl(url: string) {
     return { issues, linksFound: links.size };
   } catch (error) {
     console.error(`Error analyzing URL ${url}:`, error);
-    // Mark as processed even if it fails to avoid endless retries
     await db.update(urls)
       .set({ processed: true })
       .where(eq(urls.url, url));
@@ -153,16 +146,58 @@ async function getNextUnprocessedUrl(domain: string) {
   return nextUrl;
 }
 
+const BATCH_SIZE = 5; 
+
+async function processUrlBatch(domain: string, startingBatch: number = 0): Promise<{
+  issues: any[];
+  processedUrls: string[];
+  hasMore: boolean;
+}> {
+  const allIssues: any[] = [];
+  const processedUrls: string[] = [];
+
+  const [{ count }] = await db
+    .select({ count: sql`count(*)`.mapWith(Number) })
+    .from(urls)
+    .where(
+      and(
+        eq(urls.domain, domain),
+        eq(urls.processed, false)
+      )
+    );
+
+  const totalUrls = Number(count);
+
+  for (let i = 0; i < BATCH_SIZE; i++) {
+    const nextUrl = await getNextUnprocessedUrl(domain);
+    if (!nextUrl) break;
+
+    try {
+      const results = await analyzeUrl(nextUrl.url);
+      allIssues.push(...results.issues);
+      processedUrls.push(nextUrl.url);
+    } catch (error) {
+      console.error(`Error processing URL ${nextUrl.url}:`, error);
+      processedUrls.push(`${nextUrl.url} (failed)`);
+    }
+  }
+
+  const remainingUrls = totalUrls - ((startingBatch + 1) * BATCH_SIZE);
+  return {
+    issues: allIssues,
+    processedUrls,
+    hasMore: remainingUrls > 0
+  };
+}
+
 export function registerRoutes(app: Express): Server {
   const httpServer = createServer(app);
 
-  // Create WebSocket server with specific path
   const wss = new WebSocketServer({ 
     server: httpServer,
     path: '/ws'
   });
 
-  // Store WSS instance in app locals for access in routes
   app.locals.wss = wss;
 
   app.post("/api/check", async (req, res) => {
@@ -170,60 +205,40 @@ export function registerRoutes(app: Express): Server {
       const { url } = urlSchema.parse(req.body);
       const domain = getDomain(url);
       let allIssues: any[] = [];
-      let totalLinksFound = 0;
-      const processedUrls: string[] = [];
+      let allProcessedUrls: string[] = [];
 
-      try {
-        // Analyze initial URL
-        const initialResults = await analyzeUrl(url);
-        allIssues.push(...initialResults.issues);
-        totalLinksFound += initialResults.linksFound;
-        processedUrls.push(url);
+      const initialResults = await analyzeUrl(url);
+      allIssues.push(...initialResults.issues);
+      allProcessedUrls.push(url);
 
-        // Process discovered links with a limit
-        let processedCount = 0;
-        while (processedCount < 20) { // Increased from 5 to 20
-          const nextUrl = await getNextUnprocessedUrl(domain);
-          if (!nextUrl) break;
+      let currentBatch = 0;
+      let hasMore = true;
 
-          // Emit processing status via WebSocket
-          wss.clients.forEach((client) => {
-            if (client.readyState === WebSocket.OPEN) {
-              client.send(JSON.stringify({ 
-                type: 'processing', 
-                url: nextUrl.url,
-                progress: {
-                  current: processedCount + 1,
-                  total: 20
-                }
-              }));
-            }
-          });
-
-          try {
-            const results = await analyzeUrl(nextUrl.url);
-            allIssues.push(...results.issues);
-            totalLinksFound += results.linksFound;
-            processedUrls.push(nextUrl.url);
-            processedCount++;
-          } catch (error) {
-            console.error(`Error processing URL ${nextUrl.url}:`, error);
-            // Continue with next URL even if current one fails
-            processedUrls.push(`${nextUrl.url} (failed)`);
-            processedCount++;
+      while (hasMore) {
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({ 
+              type: 'processing',
+              currentBatch,
+              url: `Processing batch ${currentBatch + 1}`,
+              totalProcessed: allProcessedUrls.length
+            }));
           }
-        }
-
-        res.json({ 
-          issues: allIssues,
-          linksFound: totalLinksFound,
-          processedUrls: processedUrls
         });
 
-      } catch (error) {
-        console.error('Error during page operations:', error);
-        throw error;
+        const batchResults = await processUrlBatch(domain, currentBatch);
+        allIssues.push(...batchResults.issues);
+        allProcessedUrls.push(...batchResults.processedUrls);
+        hasMore = batchResults.hasMore;
+        currentBatch++;
       }
+
+      res.json({ 
+        issues: allIssues,
+        processedUrls: allProcessedUrls,
+        totalProcessed: allProcessedUrls.length
+      });
+
     } catch (error) {
       console.error('Error checking accessibility:', error);
       res.status(400).json({ 
@@ -232,7 +247,6 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Add endpoint to get unprocessed URLs for a domain
   app.get("/api/pending-urls", async (req, res) => {
     try {
       const domain = req.query.domain as string;
