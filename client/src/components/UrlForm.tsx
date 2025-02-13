@@ -30,6 +30,7 @@ export default function UrlForm({ onResults }: UrlFormProps) {
   const { toast } = useToast();
   const [checkStep, setCheckStep] = useState(-1);
   const [currentUrl, setCurrentUrl] = useState<string>("");
+  const [progress, setProgress] = useState<{ current: number; total: number; } | undefined>();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -40,14 +41,15 @@ export default function UrlForm({ onResults }: UrlFormProps) {
 
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      setCheckStep(0); // Start checking
+      setCheckStep(0); 
       setCurrentUrl(values.url);
       const res = await apiRequest("POST", "/api/check", values);
       return res.json();
     },
     onSuccess: (data) => {
-      setCheckStep(-1); // Reset progress
-      setCurrentUrl(""); // Reset current URL
+      setCheckStep(-1); 
+      setCurrentUrl(""); 
+      setProgress(undefined);
       onResults(data.issues, form.getValues("url"), data.processedUrls);
       toast({
         title: "Analysis Complete",
@@ -57,6 +59,7 @@ export default function UrlForm({ onResults }: UrlFormProps) {
     onError: (error) => {
       setCheckStep(-1);
       setCurrentUrl("");
+      setProgress(undefined);
       toast({
         title: "Error",
         description: error.message,
@@ -65,7 +68,6 @@ export default function UrlForm({ onResults }: UrlFormProps) {
     },
   });
 
-  // WebSocket setup for progress updates
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsUrl = `${protocol}//${window.location.host}/ws`;
@@ -74,8 +76,11 @@ export default function UrlForm({ onResults }: UrlFormProps) {
     ws.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        if (data.type === 'processing' && data.url) {
+        if (data.type === 'processing') {
           setCurrentUrl(data.url);
+          if (data.progress) {
+            setProgress(data.progress);
+          }
         }
       } catch (error) {
         console.error('WebSocket message parsing error:', error);
@@ -93,7 +98,6 @@ export default function UrlForm({ onResults }: UrlFormProps) {
     };
   }, []);
 
-  // Simulate progress steps
   useEffect(() => {
     if (checkStep >= 0 && checkStep < 2) {
       const timer = setTimeout(() => {
@@ -138,7 +142,13 @@ export default function UrlForm({ onResults }: UrlFormProps) {
             </FormItem>
           )}
         />
-        {checkStep >= 0 && <CheckProgress currentStep={checkStep} currentUrl={currentUrl} />}
+        {checkStep >= 0 && (
+          <CheckProgress 
+            currentStep={checkStep} 
+            currentUrl={currentUrl}
+            progress={progress}
+          />
+        )}
       </form>
     </Form>
   );

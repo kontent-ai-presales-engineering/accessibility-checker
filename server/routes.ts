@@ -41,7 +41,7 @@ async function analyzeUrl(url: string) {
     await page.setViewport({ width: 1280, height: 800 });
     await page.goto(url, { 
       waitUntil: 'networkidle0',
-      timeout: 15000 // Reduced timeout to fail faster
+      timeout: 15000 
     });
 
     // Extract links
@@ -182,9 +182,7 @@ export function registerRoutes(app: Express): Server {
 
         // Process discovered links with a limit
         let processedCount = 0;
-        const MAX_URLS = 5; // Reduced limit for better stability
-
-        while (processedCount < MAX_URLS) {
+        while (processedCount < 20) { // Increased from 5 to 20
           const nextUrl = await getNextUnprocessedUrl(domain);
           if (!nextUrl) break;
 
@@ -193,16 +191,27 @@ export function registerRoutes(app: Express): Server {
             if (client.readyState === WebSocket.OPEN) {
               client.send(JSON.stringify({ 
                 type: 'processing', 
-                url: nextUrl.url 
+                url: nextUrl.url,
+                progress: {
+                  current: processedCount + 1,
+                  total: 20
+                }
               }));
             }
           });
 
-          const results = await analyzeUrl(nextUrl.url);
-          allIssues.push(...results.issues);
-          totalLinksFound += results.linksFound;
-          processedUrls.push(nextUrl.url);
-          processedCount++;
+          try {
+            const results = await analyzeUrl(nextUrl.url);
+            allIssues.push(...results.issues);
+            totalLinksFound += results.linksFound;
+            processedUrls.push(nextUrl.url);
+            processedCount++;
+          } catch (error) {
+            console.error(`Error processing URL ${nextUrl.url}:`, error);
+            // Continue with next URL even if current one fails
+            processedUrls.push(`${nextUrl.url} (failed)`);
+            processedCount++;
+          }
         }
 
         res.json({ 
