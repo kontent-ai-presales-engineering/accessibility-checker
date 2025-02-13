@@ -4,7 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccessibilityIssue, severityColors, exportToCSV, exportToJSON } from "@/lib/wcag";
 import IssueSeverity from "./IssueSeverity";
 import { Button } from "@/components/ui/button";
-import { Copy, Download } from "lucide-react";
+import { Copy, Download, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
@@ -16,9 +16,10 @@ import {
 interface AccessibilityResultsProps {
   issues: AccessibilityIssue[];
   url: string;
+  processedUrls: string[];
 }
 
-export default function AccessibilityResults({ issues, url }: AccessibilityResultsProps) {
+export default function AccessibilityResults({ issues, url, processedUrls }: AccessibilityResultsProps) {
   const { toast } = useToast();
   const severities = ['critical', 'serious', 'moderate', 'minor'] as const;
 
@@ -52,13 +53,24 @@ export default function AccessibilityResults({ issues, url }: AccessibilityResul
             </DropdownMenuContent>
           </DropdownMenu>
         </CardTitle>
+        <div className="mt-4 text-sm text-muted-foreground">
+          <div className="font-medium">Processed URLs ({processedUrls.length}):</div>
+          <div className="mt-2 space-y-1">
+            {processedUrls.map((processedUrl, index) => (
+              <div key={index} className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span>{processedUrl}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="critical">
           <TabsList className="grid w-full grid-cols-4">
             {severities.map((severity) => (
-              <TabsTrigger 
-                key={severity} 
+              <TabsTrigger
+                key={severity}
                 value={severity}
                 className="capitalize"
               >
@@ -73,8 +85,8 @@ export default function AccessibilityResults({ issues, url }: AccessibilityResul
                 {issues
                   .filter(issue => issue.impact === severity)
                   .map((issue, idx) => (
-                    <div 
-                      key={idx} 
+                    <div
+                      key={idx}
                       className="mb-6 pb-6 border-b last:border-b-0"
                     >
                       <div className="flex items-start justify-between gap-4">
@@ -90,7 +102,7 @@ export default function AccessibilityResults({ issues, url }: AccessibilityResul
                           )}
                         </div>
                         <Button
-                          variant="outline" 
+                          variant="outline"
                           size="icon"
                           onClick={() => copyToClipboard(issue.selector)}
                           title="Copy selector"

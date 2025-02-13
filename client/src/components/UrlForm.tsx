@@ -23,13 +23,14 @@ const formSchema = z.object({
 });
 
 interface UrlFormProps {
-  onResults: (issues: AccessibilityIssue[], url: string) => void;
+  onResults: (issues: AccessibilityIssue[], url: string, processedUrls: string[]) => void;
 }
 
 export default function UrlForm({ onResults }: UrlFormProps) {
   const { toast } = useToast();
   const [checkStep, setCheckStep] = useState(-1);
-  const [pendingUrls, setPendingUrls] = useState<string[]>([]); // Added state for pending URLs
+  const [currentUrl, setCurrentUrl] = useState<string>("");
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -40,27 +41,22 @@ export default function UrlForm({ onResults }: UrlFormProps) {
   const mutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       setCheckStep(0); // Start checking
+      setCurrentUrl(values.url);
       const res = await apiRequest("POST", "/api/check", values);
       return res.json();
     },
     onSuccess: (data) => {
       setCheckStep(-1); // Reset progress
-      onResults(data.issues, form.getValues("url"));
+      setCurrentUrl(""); // Reset current URL
+      onResults(data.issues, form.getValues("url"), data.processedUrls);
       toast({
         title: "Analysis Complete",
-        description: `Found ${data.issues.length} accessibility issues and ${data.linksFound} internal links`,
+        description: `Found ${data.issues.length} accessibility issues across ${data.processedUrls.length} pages`,
       });
-
-      // If links were found, show a toast with info about cascade checking
-      if (data.linksFound > 0) {
-        toast({
-          title: "Links Found",
-          description: `${data.linksFound} internal links have been stored for further analysis`,
-        });
-      }
     },
     onError: (error) => {
-      setCheckStep(-1); // Reset progress
+      setCheckStep(-1);
+      setCurrentUrl("");
       toast({
         title: "Error",
         description: error.message,
@@ -68,6 +64,34 @@ export default function UrlForm({ onResults }: UrlFormProps) {
       });
     },
   });
+
+  // WebSocket setup for progress updates
+  useEffect(() => {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.type === 'processing' && data.url) {
+          setCurrentUrl(data.url);
+        }
+      } catch (error) {
+        console.error('WebSocket message parsing error:', error);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
+    };
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, []);
 
   // Simulate progress steps
   useEffect(() => {
@@ -114,7 +138,7 @@ export default function UrlForm({ onResults }: UrlFormProps) {
             </FormItem>
           )}
         />
-        {checkStep >= 0 && <CheckProgress currentStep={checkStep} />}
+        {checkStep >= 0 && <CheckProgress currentStep={checkStep} currentUrl={currentUrl} />}
       </form>
     </Form>
   );

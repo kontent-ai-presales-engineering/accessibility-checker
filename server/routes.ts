@@ -8,6 +8,8 @@ import { db } from "@db";
 import { urls } from "@db/schema";
 import { eq, and } from "drizzle-orm";
 import { getDomain, isInternalLink, normalizeUrl } from "./utils";
+import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 
 const urlSchema = z.object({
   url: z.string().url()
@@ -152,18 +154,31 @@ async function getNextUnprocessedUrl(domain: string) {
 }
 
 export function registerRoutes(app: Express): Server {
+  const httpServer = createServer(app);
+
+  // Create WebSocket server with specific path
+  const wss = new WebSocketServer({ 
+    server: httpServer,
+    path: '/ws'
+  });
+
+  // Store WSS instance in app locals for access in routes
+  app.locals.wss = wss;
+
   app.post("/api/check", async (req, res) => {
     try {
       const { url } = urlSchema.parse(req.body);
       const domain = getDomain(url);
       let allIssues: any[] = [];
       let totalLinksFound = 0;
+      const processedUrls: string[] = [];
 
       try {
         // Analyze initial URL
         const initialResults = await analyzeUrl(url);
         allIssues.push(...initialResults.issues);
         totalLinksFound += initialResults.linksFound;
+        processedUrls.push(url);
 
         // Process discovered links with a limit
         let processedCount = 0;
@@ -173,15 +188,27 @@ export function registerRoutes(app: Express): Server {
           const nextUrl = await getNextUnprocessedUrl(domain);
           if (!nextUrl) break;
 
+          // Emit processing status via WebSocket
+          wss.clients.forEach((client) => {
+            if (client.readyState === WebSocket.OPEN) {
+              client.send(JSON.stringify({ 
+                type: 'processing', 
+                url: nextUrl.url 
+              }));
+            }
+          });
+
           const results = await analyzeUrl(nextUrl.url);
           allIssues.push(...results.issues);
           totalLinksFound += results.linksFound;
+          processedUrls.push(nextUrl.url);
           processedCount++;
         }
 
         res.json({ 
           issues: allIssues,
-          linksFound: totalLinksFound
+          linksFound: totalLinksFound,
+          processedUrls: processedUrls
         });
 
       } catch (error) {
@@ -221,6 +248,5 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  const httpServer = createServer(app);
   return httpServer;
 }

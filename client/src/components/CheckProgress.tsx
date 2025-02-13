@@ -3,6 +3,7 @@ import { CheckCircle2, Circle, Loader2 } from "lucide-react";
 
 interface CheckProgressProps {
   currentStep: number;
+  currentUrl?: string;
 }
 
 const steps = [
@@ -11,7 +12,7 @@ const steps = [
   "Running accessibility analysis"
 ];
 
-export default function CheckProgress({ currentStep }: CheckProgressProps) {
+export default function CheckProgress({ currentStep, currentUrl }: CheckProgressProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -35,6 +36,11 @@ export default function CheckProgress({ currentStep }: CheckProgressProps) {
           )}
           <span className={index <= currentStep ? "text-foreground" : "text-muted-foreground"}>
             {step}
+            {index === currentStep && currentUrl && (
+              <span className="ml-2 text-sm text-muted-foreground">
+                (Processing: {currentUrl})
+              </span>
+            )}
           </span>
         </motion.div>
       ))}

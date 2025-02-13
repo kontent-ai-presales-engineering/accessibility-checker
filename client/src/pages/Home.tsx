@@ -7,6 +7,7 @@ import type { AccessibilityIssue } from "@/lib/wcag";
 export default function Home() {
   const [issues, setIssues] = useState<AccessibilityIssue[]>([]);
   const [url, setUrl] = useState<string>("");
+  const [processedUrls, setProcessedUrls] = useState<string[]>([]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-8">
@@ -18,15 +19,20 @@ export default function Home() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <UrlForm onResults={(results, checkedUrl) => {
+            <UrlForm onResults={(results, checkedUrl, urls) => {
               setIssues(results);
               setUrl(checkedUrl);
+              setProcessedUrls(urls);
             }} />
           </CardContent>
         </Card>
 
         {issues.length > 0 && (
-          <AccessibilityResults issues={issues} url={url} />
+          <AccessibilityResults 
+            issues={issues} 
+            url={url} 
+            processedUrls={processedUrls}
+          />
         )}
       </div>
     </div>
