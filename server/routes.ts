@@ -52,9 +52,20 @@ export function registerRoutes(app: Express): Server {
           const wcagTags = violation.tags
             .filter((t: string) => t.startsWith('wcag'))
             .map((tag: string) => {
-              const [_, level, criterion] = tag.split('.');
-              return `WCAG ${level.toUpperCase()} ${criterion}`;
+              try {
+                const parts = tag.split('.');
+                if (parts.length >= 3) {
+                  const level = parts[1];
+                  const criterion = parts[2];
+                  return `WCAG ${level.toUpperCase()} ${criterion}`;
+                }
+                return tag; // Return original tag if it doesn't match expected format
+              } catch (error) {
+                console.error('Error parsing WCAG tag:', tag, error);
+                return tag; // Return original tag on error
+              }
             })
+            .filter(Boolean) // Remove any undefined/null values
             .join(', ');
 
           return {
@@ -63,7 +74,7 @@ export function registerRoutes(app: Express): Server {
             message: violation.help,
             context: violation.nodes[0]?.html || '',
             selector: violation.nodes[0]?.target[0] || '',
-            wcagCriteria: wcagTags,
+            wcagCriteria: wcagTags || 'Not specified',
             impact: violation.impact as 'critical' | 'serious' | 'moderate' | 'minor',
             suggestion: violation.nodes[0]?.failureSummary || violation.description,
             helpUrl: violation.helpUrl,
