@@ -43,11 +43,10 @@ export default function UrlForm({ onResults }: UrlFormProps) {
   });
 
   const mutation = useMutation({
-    mutationFn: (data: { url: string }) => apiRequest('/api/check', {
-      method: 'POST',
-      body: JSON.stringify(data),
-      headers: { 'Content-Type': 'application/json' },
-    }),
+    mutationFn: async (data: { url: string }) => {
+      const res = await apiRequest('POST', '/api/check', data);
+      return res.json();
+    },
     onSuccess: (data) => {
       onResults(data.issues, data.url, data.processedUrls);
       if (ws) {
