@@ -27,3 +27,4 @@ migrations/
 generated-*.png
 generated-*.jpg
 generated-*.svg
+attached_assets/
