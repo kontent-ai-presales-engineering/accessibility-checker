@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AccessibilityIssue, severityColors, exportToCSV, exportToJSON } from "@/lib/wcag";
 import IssueSeverity from "./IssueSeverity";
+import WCAGCriteria from "./WCAGCriteria";
 import { Button } from "@/components/ui/button";
 import { Copy, Download, MapPin } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -153,9 +154,9 @@ export default function AccessibilityResults({ issues, url }: AccessibilityResul
                               <span className="text-muted-foreground">Selector:</span>
                               <code className="text-xs bg-muted px-2 py-1 rounded font-mono">{issue.selector}</code>
                             </div>
-                            <div className="grid grid-cols-[120px_1fr] gap-2">
+                            <div className="grid grid-cols-[120px_1fr] gap-2 items-start">
                               <span className="text-muted-foreground">WCAG Criteria:</span>
-                              <span className="font-medium">{issue.wcagCriteria}</span>
+                              <WCAGCriteria wcagTags={issue.wcagCriteria} helpUrl={issue.helpUrl} />
                             </div>
                           </div>
 
