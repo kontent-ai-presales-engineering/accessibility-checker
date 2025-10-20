@@ -56,7 +56,7 @@ export default function Home() {
 
       <div className="mx-auto max-w-7xl px-6 py-8">
         <Card className="shadow-sm border-border">
-          <CardHeader className="border-b bg-white">
+          <CardHeader className="border-b bg-white rounded-t-lg">
             <CardTitle className="text-lg font-medium">
               Enter URL to analyze
             </CardTitle>
