@@ -49,7 +49,7 @@ export default function AccessibilityResults({ issues, url }: AccessibilityResul
 
   return (
     <Card className="shadow-sm border-border">
-      <CardHeader className="border-b bg-white">
+      <CardHeader className="border-b bg-white rounded-t-lg">
         <CardTitle className="text-lg font-medium">
           <div className="flex items-start justify-between gap-4">
             <div>
