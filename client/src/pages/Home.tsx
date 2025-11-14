@@ -13,63 +13,64 @@ export default function Home() {
 
   // Initialize Kontent.ai custom app SDK
   useEffect(() => {
+    // Check for verbose logging flag
+    const isVerbose = import.meta.env.VITE_VERBOSE_LOGGING === 'true';
+
     const initKontentApp = async () => {
       try {
         // Dynamically import the SDK to avoid issues in standalone mode
         const { getCustomAppContext } = await import("@kontent-ai/custom-app-sdk");
 
-        console.log('[Kontent.ai] Initializing SDK (works from any deployment - Railway, Render, etc.)');
         const context = await getCustomAppContext();
-
-        console.log('[Kontent.ai] Full context received:', context);
+        if (isVerbose) {
+          console.log('[Kontent.ai] Context received:', context);
+        }
 
         // Parse config if it's a JSON string
         let config = context?.config;
         if (typeof config === 'string') {
-          console.log('[Kontent.ai] Config is a string, parsing JSON...');
           try {
             config = JSON.parse(config);
-            console.log('[Kontent.ai] ✓ Config parsed successfully:', config);
+            if (isVerbose) {
+              console.log('[Kontent.ai] Config parsed:', config);
+            }
           } catch (e) {
-            console.error('[Kontent.ai] ✗ Failed to parse config JSON:', e);
+            console.error('[Kontent.ai] Failed to parse config:', e);
             config = {};
           }
         }
-
-        console.log('[Kontent.ai] Config keys available:', Object.keys(config || {}));
 
         // Extract Management API key from config
         const managementApiKey = (config as any)?.KONTENT_AI_MANAGEMENT_API_KEY;
         if (managementApiKey) {
           setApiKey(managementApiKey);
-          console.log('[Kontent.ai] ✓ Management API key found - spaces dropdown will be available');
+          if (isVerbose) {
+            console.log('[Kontent.ai] ✓ API key loaded');
+          }
         } else {
-          console.warn('[Kontent.ai] ✗ No Management API key found in config');
-          console.warn('[Kontent.ai] To enable spaces: Add KONTENT_AI_MANAGEMENT_API_KEY parameter in Kontent.ai custom app settings');
+          console.warn('[Kontent.ai] No API key found - add KONTENT_AI_MANAGEMENT_API_KEY in custom app settings');
         }
 
-        // Get environment ID - it's nested at context.context.environmentId
+        // Get environment ID
         const envId = (context as any)?.context?.environmentId;
         if (envId) {
           setProjectId(envId);
-          console.log('[Kontent.ai] ✓ Environment ID found:', envId);
+          if (isVerbose) {
+            console.log('[Kontent.ai] ✓ Environment ID:', envId);
+          }
         } else {
-          console.warn('[Kontent.ai] ✗ No environment ID found');
+          console.warn('[Kontent.ai] No environment ID found');
         }
       } catch (error) {
-        console.error('[Kontent.ai] Failed to initialize custom app SDK:', error);
-        console.log('[Kontent.ai] This is expected when running standalone (not embedded in Kontent.ai)');
+        if (isVerbose) {
+          console.log('[Kontent.ai] Not running in Kontent.ai custom app');
+        }
       }
     };
 
     // Check if we're in an iframe (embedded in Kontent.ai)
     if (window.self !== window.top) {
-      console.log('[Kontent.ai] Detected iframe context - will attempt to load Kontent.ai integration');
-      console.log('[Kontent.ai] This works regardless of deployment location (Railway, Render, Vercel, etc.)');
       initKontentApp();
-    } else {
-      console.log('[Kontent.ai] Running standalone - Kontent.ai integration disabled');
-      console.log('[Kontent.ai] To use spaces: Deploy to Railway/Render and configure as Kontent.ai custom app');
     }
   }, []);
 

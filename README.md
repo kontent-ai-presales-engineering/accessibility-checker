@@ -66,10 +66,10 @@ The application consists of three main components:
 
 3. **Set up environment variables** (Optional)
 
-   Create a `.env` file in the root directory:
+   Create a `.env` file in the root directory (see `.env.example`):
    ```env
-   # Optional: For Kontent.ai integration
-   KONTENT_MANAGEMENT_API_KEY=your_api_key_here
+   # Optional: Enable verbose logging for debugging
+   VITE_VERBOSE_LOGGING=false
    ```
 
    **Note:** When using as a Kontent.ai custom app, the Management API key must be configured in the app settings with the key `KONTENT_AI_MANAGEMENT_API_KEY` (see Kontent.ai Custom App section below).
@@ -220,6 +220,23 @@ Use the bookmarklet feature to:
 
 ## Configuration
 
+### Environment Variables
+
+#### Verbose Logging
+
+To enable detailed debug logs for Kontent.ai integration and spaces loading:
+
+```env
+VITE_VERBOSE_LOGGING=true
+```
+
+When enabled, you'll see detailed logs in the browser console about:
+- Kontent.ai context initialization
+- Configuration parsing
+- Spaces API requests and responses
+
+**Default:** `false` (only shows warnings and errors)
+
 ### Kontent.ai Custom App
 
 To use as a Kontent.ai custom app:
@@ -231,6 +248,8 @@ To use as a Kontent.ai custom app:
    - Description: Management API key for fetching spaces
 
 3. Set the app URL to your deployment
+
+For detailed setup instructions, see [KONTENT_AI_SETUP.md](./KONTENT_AI_SETUP.md)
 
 ### Database
 
