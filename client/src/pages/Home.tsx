@@ -21,14 +21,21 @@ export default function Home() {
         console.log('[Kontent.ai] Initializing SDK (works from any deployment - Railway, Render, etc.)');
         const context = await getCustomAppContext();
 
-        console.log('[Kontent.ai] Custom app context loaded:', {
+        console.log('[Kontent.ai] Full context received:', context);
+        console.log('[Kontent.ai] Context structure:', {
           hasConfig: !!context?.config,
+          config: context?.config,
           hasEnvironmentId: !!(context as any)?.context?.environmentId,
-          configKeys: context?.config ? Object.keys(context.config) : []
+          configKeys: context?.config ? Object.keys(context.config) : [],
+          configType: typeof context?.config
         });
 
         // Extract Management API key from config
-        const managementApiKey = context?.config?.KONTENT_AI_MANAGEMENT_API_KEY;
+        // Try different possible locations for the API key
+        const managementApiKey =
+          context?.config?.KONTENT_AI_MANAGEMENT_API_KEY ||
+          context?.config?.kontent_ai_management_api_key ||
+          (context?.config as any)?.managementApiKey;
         if (managementApiKey) {
           setApiKey(managementApiKey);
           console.log('[Kontent.ai] ✓ Management API key found - spaces dropdown will be available');
