@@ -197,17 +197,10 @@ async function analyzeUrl(
 
     // Process violations
     const issues = results.violations.map((violation: any) => {
+      // Extract WCAG tags without modification - let frontend handle parsing
       const wcagTags = violation.tags
         .filter((t: string) => t.startsWith('wcag'))
-        .map((tag: string) => {
-          const parts = tag.split('.');
-          if (parts.length >= 3) {
-            return `WCAG ${parts[1].toUpperCase()} ${parts[2]}`;
-          }
-          return tag;
-        })
-        .filter(Boolean)
-        .join(', ');
+        .join(','); // Comma-separated for frontend parsing
 
       return {
         code: violation.id,
