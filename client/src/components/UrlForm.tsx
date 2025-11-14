@@ -54,6 +54,19 @@ const formSchema = z.object({
   }
 });
 
+function normalizeUserInputUrl(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+
+  // If already has protocol, keep it
+  if (/^https?:\/\//i.test(trimmed)) {
+    return trimmed;
+  }
+
+  // Otherwise add https://
+  return `https://${trimmed}`;
+}
+
 interface UrlFormProps {
   apiKey: string | null;
   projectId: string | null;
@@ -265,7 +278,8 @@ export default function UrlForm({ apiKey, projectId, onResults }: UrlFormProps) 
       const selectedSpace = spaces.find(s => s.id === values.spaceId);
       urlToAnalyze = selectedSpace?.url || "";
     } else {
-      urlToAnalyze = values.url || "";
+      // Normalize user input URL (add https:// if missing)
+      urlToAnalyze = normalizeUserInputUrl(values.url || "");
     }
 
     setInitialUrl(urlToAnalyze);
@@ -377,7 +391,7 @@ export default function UrlForm({ apiKey, projectId, onResults }: UrlFormProps) 
                     <FormControl>
                       <div className="flex gap-3">
                         <Input
-                          placeholder="https://example.com"
+                          placeholder="example.com"
                           value={displayValue}
                           onChange={(e) => {
                             field.onChange(e);
