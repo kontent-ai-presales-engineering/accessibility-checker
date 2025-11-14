@@ -22,20 +22,24 @@ export default function Home() {
         const context = await getCustomAppContext();
 
         console.log('[Kontent.ai] Full context received:', context);
-        console.log('[Kontent.ai] Context structure:', {
-          hasConfig: !!context?.config,
-          config: context?.config,
-          hasEnvironmentId: !!(context as any)?.context?.environmentId,
-          configKeys: context?.config ? Object.keys(context.config) : [],
-          configType: typeof context?.config
-        });
+
+        // Parse config if it's a JSON string
+        let config = context?.config;
+        if (typeof config === 'string') {
+          console.log('[Kontent.ai] Config is a string, parsing JSON...');
+          try {
+            config = JSON.parse(config);
+            console.log('[Kontent.ai] ✓ Config parsed successfully:', config);
+          } catch (e) {
+            console.error('[Kontent.ai] ✗ Failed to parse config JSON:', e);
+            config = {};
+          }
+        }
+
+        console.log('[Kontent.ai] Config keys available:', Object.keys(config || {}));
 
         // Extract Management API key from config
-        // Try different possible locations for the API key
-        const managementApiKey =
-          context?.config?.KONTENT_AI_MANAGEMENT_API_KEY ||
-          context?.config?.kontent_ai_management_api_key ||
-          (context?.config as any)?.managementApiKey;
+        const managementApiKey = (config as any)?.KONTENT_AI_MANAGEMENT_API_KEY;
         if (managementApiKey) {
           setApiKey(managementApiKey);
           console.log('[Kontent.ai] ✓ Management API key found - spaces dropdown will be available');
