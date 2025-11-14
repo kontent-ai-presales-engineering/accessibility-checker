@@ -2,14 +2,40 @@
 
 A comprehensive web accessibility scanner that analyzes websites for WCAG compliance issues. Built with React, Express, and Puppeteer, featuring real-time progress tracking and Kontent.ai integration.
 
-## Quick Deploy
+## 🚀 Quick Deploy
+
+Deploy to production in seconds with one click:
+
+<table>
+<tr>
+<td width="50%" align="center">
+
+### Railway
 
 [![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/9C0krv)
+
+**Free Tier:** $5/month credit
+**Deploy Time:** ~2 minutes
+**Features:** Auto-scaling, instant rollbacks
+
+</td>
+<td width="50%" align="center">
+
+### Render
+
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/butcher-07/accessibility-checker)
 
-Click a button above to deploy with one click! Both platforms auto-detect the configuration and deploy automatically.
+**Free Tier:** 750 hours/month
+**Deploy Time:** ~3 minutes
+**Features:** Auto-deploy, HTTPS included
 
-See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions.
+</td>
+</tr>
+</table>
+
+Both platforms automatically detect configuration and handle all setup!
+
+📖 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed instructions and Docker deployment.
 
 ## Features
 

@@ -18,49 +18,96 @@ Click the button to deploy with one click! Railway will automatically:
 
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/butcher-07/accessibility-checker)
 
-Click the button to deploy directly from the `render.yaml` blueprint.
+Click the button to deploy with one click! Render will automatically:
+- Clone the repository
+- Detect `render.yaml` blueprint configuration
+- Install all dependencies including Puppeteer/Chrome
+- Build the optimized production bundle
+- Start the server on the correct port
+- Provide HTTPS endpoint instantly
 
 ---
 
-## Render.com Deployment
+## 🎨 Render.com Deployment
 
-### Method 1: Blueprint (Easiest)
-1. Push your code to GitHub
-2. Go to [Render Dashboard](https://dashboard.render.com/)
-3. Click "New +" → "Blueprint"
-4. Connect your repository
-5. Render will automatically detect `render.yaml` and set up everything
+### ⚡ Method 1: One-Click Blueprint (Recommended)
 
-### Method 2: Manual Setup
+The fastest way to deploy - just click the button above or follow these steps:
+
+1. **Click** the "Deploy to Render" button
+2. **Connect** your GitHub account (if not already)
+3. **Wait** ~3 minutes while Render:
+   - Clones the repository
+   - Reads `render.yaml` configuration
+   - Installs Node.js dependencies
+   - Downloads Puppeteer & Chrome
+   - Builds the production bundle
+   - Starts your application
+4. **Access** your live app via the provided `.onrender.com` URL
+
+### 🛠️ Method 2: Manual Setup
+
+For more control over the deployment:
+
 1. Go to [Render Dashboard](https://dashboard.render.com/)
-2. Click "New +" → "Web Service"
+2. Click **"New +" → "Web Service"**
 3. Connect your GitHub repository
 4. Configure:
-   - **Name**: accessibility-scanner
-   - **Environment**: Node
+   - **Name**: `accessibility-scanner`
+   - **Environment**: `Node`
    - **Build Command**: `npm install && npm run build`
    - **Start Command**: `npm run start`
-   - **Plan**: Free
-5. Click "Create Web Service"
+   - **Plan**: `Free`
+5. Click **"Create Web Service"**
 
-**Free Tier**: 750 hours/month, sleeps after 15min inactivity, wakes on request
+### 💎 Free Tier Benefits
+
+- ✅ **750 hours/month** of runtime
+- ✅ **Automatic HTTPS** with SSL certificate
+- ✅ **Auto-deploy** on git push
+- ✅ **Custom domains** supported
+- ⚠️ Sleeps after 15 min inactivity (wakes on first request)
 
 ---
 
-## Railway.app Deployment
+## 🚂 Railway.app Deployment
 
-### Quick Deploy
-1. Push your code to GitHub
-2. Go to [Railway](https://railway.app/)
-3. Click "New Project" → "Deploy from GitHub repo"
-4. Select your repository
-5. Railway will auto-detect `railway.json` and deploy
+### ⚡ One-Click Template Deploy (Recommended)
 
-**Configuration** (auto-detected from railway.json):
-- Build: `npm install && npm run build`
-- Start: `npm run start`
+The fastest way to deploy - just click the button above or follow these steps:
 
-**Free Tier**: $5/month credit (usually enough for hobby projects)
+1. **Click** the "Deploy on Railway" button
+2. **Sign in** with GitHub (if not already)
+3. **Wait** ~2 minutes while Railway:
+   - Clones from template
+   - Detects `railway.toml` configuration
+   - Provisions infrastructure
+   - Installs dependencies & Puppeteer
+   - Builds the application
+   - Deploys to production
+4. **Access** your live app via the provided `railway.app` domain
+
+### 🛠️ Alternative: Deploy from Repository
+
+If you want to deploy from your own fork:
+
+1. Go to [Railway Dashboard](https://railway.app/)
+2. Click **"New Project" → "Deploy from GitHub repo"**
+3. Select `butcher-07/accessibility-checker`
+4. Railway automatically:
+   - Reads `railway.toml` and `railway.json`
+   - Configures build and start commands
+   - Sets up environment variables
+   - Handles PORT configuration
+
+### 💎 Free Tier Benefits
+
+- ✅ **$5/month credit** (~500 hours runtime)
+- ✅ **Instant rollbacks** to previous deployments
+- ✅ **Zero-downtime** deployments
+- ✅ **Auto-scaling** based on traffic
+- ✅ **Custom domains** with SSL
+- ✅ **No sleep** - always ready to serve
 
 ---
 
