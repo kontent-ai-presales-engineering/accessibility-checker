@@ -6,20 +6,13 @@ This guide covers deploying the Accessibility Scanner to free hosting platforms.
 
 ### Railway
 
-[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy?referralCode=butcher-07)
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/deploy/9C0krv)
 
-Click the button above, then:
-1. Sign in to Railway (if not already)
-2. Click "Deploy from GitHub repo"
-3. Select `butcher-07/accessibility-checker`
-4. Railway will auto-detect `railway.toml` and configure everything
-
-> **Note**: To create a true one-click deploy:
-> 1. Deploy the app to Railway first
-> 2. Go to your Railway project → Settings → Template
-> 3. Click "Publish Template"
-> 4. Get your template ID from the URL
-> 5. Update the button to: `https://railway.com/deploy/YOUR_TEMPLATE_ID`
+Click the button to deploy with one click! Railway will automatically:
+- Clone the repository
+- Detect `railway.toml` configuration
+- Install dependencies and build the project
+- Start the server with proper PORT configuration
 
 ### Render
 
