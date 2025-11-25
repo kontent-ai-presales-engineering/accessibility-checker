@@ -23,7 +23,7 @@ Deploy to production in seconds with one click:
 
 ### Render
 
-[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/butcher-07/accessibility-checker)
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/kontent-ai-presales-engineering/accessibility-checker)
 
 **Free Tier:** 750 hours/month
 **Deploy Time:** ~3 minutes
