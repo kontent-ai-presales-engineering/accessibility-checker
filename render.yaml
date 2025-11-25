@@ -4,9 +4,11 @@ services:
     env: node
     region: oregon
     plan: free
-    buildCommand: npm ci && npm run build
-    startCommand: NODE_ENV=production npm run start
+    buildCommand: NODE_ENV=development npm install && npm run build
+    startCommand: npm run start
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
         value: false
       - key: PUPPETEER_EXECUTABLE_PATH
